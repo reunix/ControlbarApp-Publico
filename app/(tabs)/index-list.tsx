@@ -6,9 +6,7 @@ import React, { useEffect, useState } from "react";
 import {
   Alert,
   Button,
-  Dimensions,
   FlatList,
-  Image,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -17,8 +15,6 @@ import { Colors } from "../../constants/Colors";
 import { useCart } from "../../context/CartContext";
 import { loadProductsLocally } from "../../services/storage";
 import { GroupedProducts } from "../../types";
-
-const { width } = Dimensions.get("window");
 
 const HomeScreen = () => {
   const [groupedProducts, setGroupedProducts] = useState<GroupedProducts[]>([]);
@@ -131,46 +127,33 @@ const HomeScreen = () => {
       cart.find((c) => c.idProduto === item.idProduto)?.quantity || 0;
 
     return (
-      <ThemedView style={styles.card}>
-        <ThemedText style={styles.itemText}>
-          {item.nomeProduto.toLocaleUpperCase()}
-        </ThemedText>
-        <Image
-          // source={
-          //   item.image
-          // ? { uri: item.image }
-          //     : require("../../assets/images/products/placeholder.jpg")
-          // }
-          source={require("../../assets/images/products/placeholder.jpg")}
-          style={styles.cardImage}
-          resizeMode="contain"
-        />
+      <ThemedView style={styles.item}>
+        <View style={styles.itemTextContainer}>
+          <ThemedText style={styles.itemText}>
+            {item.nomeProduto.toLocaleUpperCase()}
+          </ThemedText>
+          <ThemedText style={styles.itemValueText}>
+            R$ {item.valorProduto.toFixed(2)}
+          </ThemedText>
+        </View>
 
-        <ThemedView style={styles.cardContent}>
-          <View style={styles.itemTextContainer}>
-            <ThemedText style={styles.itemValueText}>
-              R$ {item.valorProduto.toFixed(2)}
-            </ThemedText>
+        <View style={styles.buttons}>
+          <View style={styles.buttonContainer}>
+            <Button
+              title="-"
+              onPress={() => removeFromCart(item.idProduto)}
+              color={Colors.dark.backgroundSecondary}
+            />
           </View>
-
-          <ThemedView style={styles.cardButtons}>
-            <View style={styles.buttonContainer}>
-              <Button
-                title="-"
-                onPress={() => removeFromCart(item.idProduto)}
-                color={Colors.dark.backgroundSecondary}
-              />
-            </View>
-            <ThemedText style={styles.quantityText}>{quantity}</ThemedText>
-            <View style={styles.buttonContainer}>
-              <Button
-                title="+"
-                onPress={() => addToCart(item)}
-                color={Colors.dark.backgroundSecondary}
-              />
-            </View>
-          </ThemedView>
-        </ThemedView>
+          <ThemedText style={styles.quantityText}>{quantity}</ThemedText>
+          <View style={styles.buttonContainer}>
+            <Button
+              title="+"
+              onPress={() => addToCart(item)}
+              color={Colors.dark.backgroundSecondary}
+            />
+          </View>
+        </View>
       </ThemedView>
     );
   };
@@ -190,14 +173,13 @@ const HomeScreen = () => {
             showsHorizontalScrollIndicator={false}
             style={styles.groupList}
           />
+
           <FlatList
             data={selectedProducts}
             keyExtractor={(item) => item.idProduto.toString()}
             renderItem={renderProductItem}
-            numColumns={2}
             style={styles.productList}
             contentContainerStyle={styles.productListContent}
-            key={`product-list-${selectedGroup || "default"}`} // Adiciona uma chave única baseada no selectedGroup
           />
         </>
       )}
@@ -208,6 +190,7 @@ const HomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+
     backgroundColor: Colors.dark.background,
     flexDirection: "column",
   },
@@ -215,7 +198,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
     paddingVertical: 15,
     flexGrow: 0,
-    // width: "95%",
   },
   groupItem: {
     paddingHorizontal: 10,
@@ -242,63 +224,41 @@ const styles = StyleSheet.create({
   },
   productList: {
     flex: 1,
+    paddingHorizontal: 5,
   },
   productListContent: {
-    paddingHorizontal: 5,
-    paddingBottom: 10,
+    flexGrow: 1,
+    paddingBottom: 5,
   },
-  card: {
-    flex: 1,
-    margin: 5,
-    backgroundColor: Colors.dark.backgroundSecondary,
-    borderRadius: 10,
-    padding: 10,
-    alignItems: "center",
-    maxWidth: (width - 30) / 2,
-    minHeight: 250,
+  itemTextContainer: {
+    flexDirection: "column",
+  },
+
+  item: {
+    flexDirection: "row",
     justifyContent: "space-between",
-  },
-  cardImage: {
-    width: 100,
-    height: 100,
-    marginBottom: 10,
-  },
-  cardContent: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.dark.border,
     backgroundColor: Colors.dark.backgroundSecondary,
-    alignItems: "center",
-    // flexGrow: 1
   },
-  cardName: {
+  itemText: {
     color: Colors.dark.text,
     fontSize: 16,
-    fontWeight: "bold",
-    textAlign: "center",
   },
-  cardPrice: {
+  itemValueText: {
     color: Colors.dark.text,
-    fontSize: 14,
-    marginVertical: 5,
+    fontSize: 13,
   },
-  cardButtons: {
-    backgroundColor: Colors.dark.backgroundSecondary,
+  buttons: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    width: "100%",
-    paddingHorizontal: 5,
-    paddingTop: 5,
-  },
-  buttonContainer: {
-    width: 40,
-    borderRadius: 9,
-    borderWidth: 1,
-    borderColor: Colors.dark.border,
-    overflow: "hidden",
+    gap: 8,
   },
   quantityText: {
     color: Colors.dark.tint,
     fontWeight: "bold",
-    fontSize: 18,
+    fontSize: 16,
   },
 
   loadingText: {
@@ -306,16 +266,12 @@ const styles = StyleSheet.create({
     textAlign: "center",
     flex: 1,
   },
-  itemTextContainer: {
-    flexDirection: "column",
-  },
-  itemText: {
-    color: Colors.dark.text,
-    fontSize: 14,
-  },
-  itemValueText: {
-    color: Colors.dark.text,
-    fontSize: 14,
+  buttonContainer: {
+    width: 40,
+    borderRadius: 9,
+    borderWidth: 1,
+    borderColor: Colors.dark.border,
+    overflow: "hidden",
   },
 });
 

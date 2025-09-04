@@ -3,24 +3,23 @@
  * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
  */
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
-
 export const Colors = {
   light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
+    text: '#11181C', // Texto escuro para fundo claro
+    background: '#FFFFFF', // Fundo branco ( Ascent
+    tint: '#FFC107', // Amarelo para destaques
+    icon: '#757575', // Cinza para ícones
+    tabIconDefault: '#757575', // Cinza para ícones de aba inativos
+    tabIconSelected: '#FFC107', // Amarelo para ícones de aba selecionados
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+    text: '#FFFFFF', // Texto branco para fundo escuro
+    background: '#000000', // Preto (fundo principal)
+    tint: '#FFC107', // Amarelo (destaques, botões)
+    icon: '#B0B0B0', // Cinza claro para ícones
+    tabIconDefault: '#B0B0B0', // Cinza claro para ícones de aba inativos
+    tabIconSelected: '#FFC107', // Amarelo para ícones de aba selecionados
+    border: '#757575', // Cinza para bordas
+    backgroundSecondary: '#424242', // Cinza escuro para fundos alternativos
   },
 };

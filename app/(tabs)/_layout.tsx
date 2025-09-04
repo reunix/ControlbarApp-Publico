@@ -1,43 +1,124 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
-import { Platform } from 'react-native';
+import { ThemedText } from "@/components/ThemedText";
+import { useEvento } from "@/constants/EventoContext";
+import { Ionicons } from "@expo/vector-icons";
+import { Tabs } from "expo-router";
+import { View } from "react-native";
+import { Colors } from "../../constants/Colors";
+import { useCart } from "../../context/CartContext";
 
-import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+// Componente para exibir o total do carrinho no header
+function HeaderRightTotal() {
+  const { total } = useCart();
+  return (
+    <ThemedText
+      style={{
+        color: Colors.dark.tint,
+        fontWeight: "bold",
+        fontSize: 25,
+        marginRight: 15,
+      }}
+    >
+      R$ {total.toFixed(2)}
+    </ThemedText>
+  );
+}
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+// Componente para renderizar título + evento
+function HeaderTitle({ title }: { title: string }) {
+  const { eventoSelecionado } = useEvento();
+  return (
+    <View style={{ alignItems: "flex-start" }}>
+      <ThemedText
+        style={{
+          color: Colors.dark.text,
+          fontWeight: "bold",
+          fontSize: 18,
+        }}
+      >
+        {title}
+      </ThemedText>
+      <ThemedText style={{ color: Colors.dark.text, fontSize: 12 }}>
+        {eventoSelecionado?.nomeEvento}
+      </ThemedText>
+    </View>
+  );
+}
 
+export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
-            position: 'absolute',
-          },
-          default: {},
-        }),
-      }}>
+        tabBarStyle: {
+          backgroundColor: Colors.dark.background,
+          borderTopColor: Colors.dark.border,
+        },
+        tabBarActiveTintColor: Colors.dark.tint,
+        tabBarInactiveTintColor: Colors.dark.tabIconDefault,
+        headerStyle: { backgroundColor: Colors.dark.background },
+        headerTintColor: Colors.dark.tint,
+        headerTitleStyle: { color: Colors.dark.text },
+        headerRight: () => <HeaderRightTotal />,
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: "Produtos",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="grid-outline" size={size} color={color} />
+          ),
+          headerTitle: () => <HeaderTitle title="Produtos" />,
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="index-list"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: "Lista",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="list-outline" size={size} color={color} />
+          ),
+          headerTitle: () => <HeaderTitle title="Produtos" />,
+        }}
+      />
+      <Tabs.Screen
+        name="cart"
+        options={{
+          title: "Pagar",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="cart-outline" size={size} color={color} />
+          ),
+          headerTitle: () => <HeaderTitle title="Carrinho" />,
+        }}
+      />
+      <Tabs.Screen
+        name="perfil"
+        options={{
+          title: "Perfil",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person-outline" size={size} color={color} />
+          ),
+          headerTitle: () => <HeaderTitle title="Cadastro" />,
+        }}
+      />
+      <Tabs.Screen
+        name="payment"
+        options={{
+          href: null,
+          title: "Pagamento",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="card-outline" size={size} color={color} />
+          ),
+          headerTitle: () => <HeaderTitle title="Pagamento" />,
+        }}
+      />
+      <Tabs.Screen
+        name="logout"
+        options={{
+          title: "Sair",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="log-out-outline" size={size} color={color} />
+          ),
+          headerShown: false,
         }}
       />
     </Tabs>
