@@ -1,18 +1,25 @@
 import { fetchApi } from './api-config';
 
-export const login = async (cpf: string): Promise<{ success: boolean; message?: string }> => {
+export const login = async (cpf: string,senha:string): Promise<{ success: boolean; message?: string }> => {
   try {
 
-    const response = await fetchApi<any>('/login', {
+
+    const isValidCpf = /^\d{11}$/.test(cpf);
+    if (!isValidCpf) {
+      return { success: false, message: 'CPF inválido. Deve conter 11 dígitos.' };
+    }
+
+    const response = await fetchApi<any>('/autenticacao/app-publico', {
          method: 'POST',
          body: JSON.stringify({
           cpf: cpf.toString(),
+          senha: senha.toString(),
          })
        })
 
-    // const response = await api.post('/login', { cpf });
-    return { success: true, message: response.data.message };
+    return { success: response.success, message: response.message };
   } catch (error) {
+    console.log('error' ,error)
     return { success: false, message: (error as any).response?.data?.error || 'Falha no login' };
   }
 };

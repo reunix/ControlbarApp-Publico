@@ -26,7 +26,8 @@ import {
   View,
 } from "react-native";
 import { Colors } from "../constants/Colors";
-import { login } from "../services/api";
+// import { login } from "../services/api";
+import { login } from "@/services/user-service";
 import { fetchProducts } from "../services/product-service";
 
 const LoginScreen = () => {
@@ -320,13 +321,14 @@ const LoginScreen = () => {
       } else {
         showToast({
           type: "error",
-          text1: "Falha no Login",
-          text2: result.message || "Erro desconhecido",
+          text1: "Erro de Login",
+          text2: result.message || "CPF ou senha incorretos. Tente novamente.",
         });
         setLoading(false);
       }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
-      console.error("Erro ao realizar login:", error);
+      // console.error("Erro ao realizar login:", error);
       showToast({
         type: "error",
         text1: "Erro",
@@ -337,7 +339,6 @@ const LoginScreen = () => {
   };
 
   const handleSelectEvento = async (evento: EventosAbertos) => {
-    
     setEventoSelecionado(evento);
     setLoading(true);
     try {
@@ -420,6 +421,14 @@ const LoginScreen = () => {
               </TouchableOpacity>
             </View>
             <TouchableOpacity
+              onPress={() => setForgotPasswordModalVisible(true)}
+            >
+              <ThemedText style={styles.forgotPasswordText}>
+                Esqueci a senha
+              </ThemedText>
+            </TouchableOpacity>
+
+            <TouchableOpacity
               style={[
                 styles.button,
                 (loading || locationLoading) && { opacity: 0.7 },
@@ -458,13 +467,12 @@ const LoginScreen = () => {
                 </>
               )}
             </TouchableOpacity>
+
             <View style={styles.postButtonContainer}>
               <TouchableOpacity
                 onPress={() => setForgotPasswordModalVisible(true)}
               >
-                <ThemedText style={styles.forgotPasswordText}>
-                  Esqueci a senha
-                </ThemedText>
+                <ThemedText style={styles.cadastrarme}>Cadastrar-me</ThemedText>
               </TouchableOpacity>
               <View style={styles.checkboxContainer}>
                 <TouchableOpacity
@@ -541,7 +549,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.dark.border,
     borderRadius: 5,
     backgroundColor: Colors.dark.backgroundSecondary,
-    marginBottom: 20,
+    marginBottom: 10,
   },
   input: {
     flex: 1,
@@ -551,7 +559,7 @@ const styles = StyleSheet.create({
     color: Colors.dark.text,
   },
   inputWithIcon: {
-    paddingRight: 40, // Espaço para o ícone
+    paddingRight: 40,
   },
   eyeIcon: {
     position: "absolute",
@@ -566,6 +574,7 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 8,
     position: "relative",
+    marginTop: 20,
   },
   buttonText: {
     color: Colors.dark.backgroundSecondary,
@@ -584,6 +593,10 @@ const styles = StyleSheet.create({
   },
   forgotPasswordText: {
     color: Colors.dark.tint,
+    fontSize: 14,
+  },
+  cadastrarme: {
+    color: Colors.dark.text,
     fontSize: 14,
   },
   checkboxContainer: {
