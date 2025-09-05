@@ -472,7 +472,7 @@ const LoginScreen = () => {
               <TouchableOpacity
                 onPress={() => setForgotPasswordModalVisible(true)}
               >
-                <ThemedText style={styles.cadastrarme}>Cadastrar-me</ThemedText>
+                <ThemedText style={styles.cadastrarme}>Criar conta</ThemedText>
               </TouchableOpacity>
               <View style={styles.checkboxContainer}>
                 <TouchableOpacity
