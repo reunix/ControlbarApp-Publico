@@ -424,7 +424,7 @@ const LoginScreen = () => {
               onPress={() => setForgotPasswordModalVisible(true)}
             >
               <ThemedText style={styles.forgotPasswordText}>
-                Esqueci a senha
+                Esqueci minha senha
               </ThemedText>
             </TouchableOpacity>
 
