@@ -225,6 +225,7 @@ const LoginScreen = () => {
       });
       setLocationLoading(false);
       return true;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       showToast({
         type: "error",
@@ -336,6 +337,7 @@ const LoginScreen = () => {
   };
 
   const handleSelectEvento = async (evento: EventosAbertos) => {
+    
     setEventoSelecionado(evento);
     setLoading(true);
     try {

@@ -7,7 +7,6 @@ import { Buffer } from "buffer";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Modal,
   StyleSheet,
   Text,
@@ -34,11 +33,10 @@ const PaymentScreen = () => {
   const [isCardModalVisible, setIsCardModalVisible] = useState(false);
   const { eventoSelecionado } = useEvento();
 
-  const idEvento = 232;
   const formPagtoMap: Record<string, number> = {
     Crédito: 1,
     Débito: 2,
-    Pix: 3,
+    Pix: 5,
   };
 
   const handlePayment = (method: string) => {
@@ -49,11 +47,12 @@ const PaymentScreen = () => {
         text2: "Nenhum produto no carrinho.",
       });
 
-      // Alert.alert("Erro", );
       return;
     }
 
-    if (method === "Pix") {
+    if (eventoSelecionado?.autopagto) {
+      setIsCardModalVisible(true);
+    } else {
       setShowQR(true);
       setQrData("");
       setQrError(null);
@@ -62,13 +61,13 @@ const PaymentScreen = () => {
         try {
           const dadosQR = {
             p: cart.map((item) => ({ id: item.idProduto, q: item.quantity })),
-            ev: idEvento,
+            ev: eventoSelecionado?.idEvento,
             fp: formPagtoMap[method],
             tt: total.toFixed(2),
           };
+
           const jsonStr = JSON.stringify(dadosQR);
           const base64Str = Buffer.from(jsonStr).toString("base64");
-          // console.log("dataQr base64:", base64Str);
 
           setQrData(base64Str);
         } catch (e: any) {
@@ -76,16 +75,15 @@ const PaymentScreen = () => {
           setQrError(String(e));
         }
       }, 300);
-    } else {
-      setIsCardModalVisible(true);
     }
   };
 
   const handleCardPayment = (data: CardPaymentDetails) => {
-    console.log("Dados do pagamento com cartão:", data);
-    Alert.alert("Sucesso", "Pagamento processado com sucesso!", [
-      { text: "OK", onPress: () => setIsCardModalVisible(false) },
-    ]);
+    showToast({
+      type: "success",
+      text1: "Atenção",
+      text2: "Pagamento processado com sucesso!",
+    });
   };
 
   let qrElement = null;
@@ -195,7 +193,8 @@ const PaymentScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "space-around",
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
     backgroundColor: Colors.dark.background,
   },
@@ -221,12 +220,14 @@ const styles = StyleSheet.create({
   },
   button: {
     height: 100,
+    width: "90%",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: Colors.dark.backgroundSecondary,
     padding: 15,
     borderRadius: 8,
+    marginVertical: 10,
     position: "relative",
   },
   buttonText: {

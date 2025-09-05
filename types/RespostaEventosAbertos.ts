@@ -6,4 +6,5 @@ export interface EventosAbertos {
   latitude:number;
   longitude:number;
   enderecoCompleto:string;
+  autopagto: boolean;
 }
