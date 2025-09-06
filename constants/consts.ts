@@ -1,6 +1,6 @@
 // consts.ts
-// export const URL_API = "http://192.168.1.3:5000"
-export const URL_API = "https://entregas.controlbar.app.br"
+export const URL_API = "http://192.168.1.3:5000"
+// export const URL_API = "https://entregas.controlbar.app.br"
 export const TOKEN_SANDBOX = "54065ba0-4f6b-4ab9-93d7-08615869930742ee782244eb81fa3d4478081c94f04f0f5c-e248-4173-8214-64f671445c73"
 
 

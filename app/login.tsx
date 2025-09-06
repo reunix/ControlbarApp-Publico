@@ -1,4 +1,3 @@
-import ForgotPasswordModal from "@/components/ForgotPasswordModal";
 import SelectEvento from "@/components/SelectEvento";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -29,6 +28,7 @@ import { Colors } from "../constants/Colors";
 // import { login } from "../services/api";
 import { login } from "@/services/user-service";
 import { fetchProducts } from "../services/product-service";
+import ForgotPasswordModal from "@/components/ForgotPasswordModal";
 
 const LoginScreen = () => {
   const [cpf, setCpf] = useState("");
@@ -472,7 +472,9 @@ const LoginScreen = () => {
               <TouchableOpacity
                 onPress={() => setForgotPasswordModalVisible(true)}
               >
-                <ThemedText style={styles.cadastrarme}>Criar uma conta</ThemedText>
+                <ThemedText style={styles.cadastrarme}>
+                  Criar uma conta
+                </ThemedText>
               </TouchableOpacity>
               <View style={styles.checkboxContainer}>
                 <TouchableOpacity

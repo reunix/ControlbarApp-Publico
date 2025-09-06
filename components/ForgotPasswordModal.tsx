@@ -1,7 +1,10 @@
 import { ThemedText } from "@/components/ThemedText";
 import { Colors } from "@/constants/Colors";
+import { sendEmailChangePassword } from "@/services/user-service";
+import { formatTime, validateEmail } from "@/services/utils";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
   Modal,
@@ -23,6 +26,9 @@ interface ForgotPasswordModalProps {
   setEmail: (email: string) => void;
 }
 
+const STORAGE_KEY = "resetPasswordData";
+const timeLeftCodeEmail = 5 * 60; // 5 minutos
+
 const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
   visible,
   onClose,
@@ -37,6 +43,7 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(timeLeftCodeEmail);
 
   const generateCode = () => {
     const code = Math.floor(1000 + Math.random() * 9000).toString();
@@ -44,13 +51,67 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
     return code;
   };
 
-  const handleCancel = () => {
+  // Recupera código salvo ao abrir modal
+  useEffect(() => {
+    const loadStoredData = async () => {
+      try {
+        const stored = await AsyncStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          const { code, expiresAt } = JSON.parse(stored);
+          const remaining = Math.floor((expiresAt - Date.now()) / 1000);
+
+          if (remaining > 0) {
+            setGeneratedCode(code);
+            setTimeLeft(remaining);
+            setStep("code");
+          } else {
+            await AsyncStorage.removeItem(STORAGE_KEY); // expirado
+          }
+        }
+      } catch (error) {
+        console.error("Erro ao carregar dados persistidos", error);
+      }
+    };
+
+    if (visible) {
+      loadStoredData();
+    }
+  }, [visible]);
+
+  // Timer para contagem regressiva
+  useEffect(() => {
+    let timer: ReturnType<typeof setInterval>;
+
+    if (step === "code" && timeLeft > 0) {
+      timer = setInterval(() => {
+        setTimeLeft((prev) => prev - 1);
+      }, 1000);
+    }
+
+    if (timeLeft === 0 && step === "code") {
+      setCode("");
+      setGeneratedCode("");
+      AsyncStorage.removeItem(STORAGE_KEY); // limpa também do storage
+      showToast({
+        type: "error",
+        text1: "Expirado",
+        text2: "O código expirou, solicite outro.",
+      });
+      setStep("email");
+    }
+
+    return () => clearInterval(timer);
+  }, [step, timeLeft]);
+
+  const handleCancel = async () => {
     setStep("email");
     setCode("");
     setNewPassword("");
     setConfirmPassword("");
     setGeneratedCode("");
     setEmail("");
+    setTimeLeft(timeLeftCodeEmail);
+    await AsyncStorage.removeItem(STORAGE_KEY);
     onClose();
   };
 
@@ -64,22 +125,38 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
       return;
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!validateEmail(email)) {
+      return;
+    }
+
+    const code = generateCode();
+    const expiresAt = Date.now() + timeLeftCodeEmail * 1000;
+
+    const result = await sendEmailChangePassword(email, code);
+
+    if (!result.success) {
       showToast({
         type: "error",
         text1: "Erro",
-        text2: "Por favor, insira um e-mail válido",
+        text2: result.message || "Erro ao tentar enviar e-mail.",
+        time: 5000,
       });
       return;
     }
 
-    generateCode();
+    // Salva no AsyncStorage
+    await AsyncStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ code, expiresAt })
+    );
+
     showToast({
       type: "success",
       text1: "Sucesso",
-      text2: "Código enviado para o e-mail",
+      text2: "Código enviado para o e-mail.",
     });
+
+    setTimeLeft(timeLeftCodeEmail);
     setStep("code");
   };
 
@@ -114,6 +191,7 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
     }
 
     showToast({ type: "success", text1: "Sucesso", text2: "Senha atualizada" });
+    await AsyncStorage.removeItem(STORAGE_KEY);
     handleCancel();
   };
 
@@ -141,13 +219,30 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                   textAlign: "center",
                 }}
               >
-                Recuperar Senha
+                {step === "code"
+                  ? `Recuperar Senha (${formatTime(timeLeft)})`
+                  : "Recuperar Senha"}
               </ThemedText>
+
+              {step === "code" && (
+                <ThemedText
+                  style={{
+                    color: Colors.dark.text,
+                    fontSize: 14,
+                    textAlign: "center",
+                    marginBottom: 10,
+                  }}
+                >
+                  Enviamos um código para o seu e-mail. Caso não encontre na
+                  caixa de entrada, verifique também as pastas de Promoções ou
+                  Spam.
+                </ThemedText>
+              )}
 
               <View style={styles.container}>
                 {step === "email" ? (
                   <>
-                   <ThemedText style={styles.title}>
+                    <ThemedText style={styles.title}>
                       Informe seu e-mail cadastrado
                     </ThemedText>
                     <View style={styles.inputContainer}>
@@ -182,9 +277,6 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                   </>
                 ) : (
                   <>
-                    <ThemedText style={styles.title}>
-                      Informe o Código e Nova Senha
-                    </ThemedText>
                     <View style={styles.inputContainer}>
                       <TextInput
                         style={styles.input}
@@ -279,12 +371,12 @@ const styles = StyleSheet.create({
     marginTop: 100,
   },
   container: {
-    width: "100%", // ocupa 90% da tela
-    maxWidth: 400, // largura máxima
+    width: "100%",
+    maxWidth: 400,
     backgroundColor: Colors.dark.backgroundSecondary,
     borderRadius: 10,
     padding: 20,
-    alignSelf: "center", // centraliza
+    alignSelf: "center",
   },
   scrollContainer: {
     flexGrow: 1,
@@ -293,7 +385,6 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   title: {
-    // width:"90%",
     fontSize: 18,
     fontWeight: "bold",
     color: Colors.dark.text,
