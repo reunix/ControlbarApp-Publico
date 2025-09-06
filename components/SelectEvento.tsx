@@ -25,14 +25,13 @@ export default function SelectEvento({
   onSelect,
   onClose,
 }: SelectEventoProps) {
+  const handleSelect = (item: EventosAbertos) => {
+    onSelect(item);
+    onClose(); // fecha aqui, fora do TouchableOpacity
+  };
+
   const renderItem = ({ item }: { item: EventosAbertos }) => (
-    <TouchableOpacity
-      style={styles.item}
-      onPress={() => {
-        onSelect(item);
-        onClose();
-      }}
-    >
+    <TouchableOpacity style={styles.item} onPress={() => handleSelect(item)}>
       <View style={styles.itemContent}>
         <View style={styles.textContainer}>
           <ThemedText style={styles.text}>
@@ -42,7 +41,7 @@ export default function SelectEvento({
             {item.nomeCliente}
           </ThemedText>
           <ThemedText style={styles.textEndereco}>
-            {item.enderecoCompleto || 'Endereço não informado'}
+            {item.enderecoCompleto || "Endereço não informado"}
           </ThemedText>
         </View>
         <Ionicons
