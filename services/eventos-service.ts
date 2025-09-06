@@ -20,8 +20,3 @@ export const fetchEventosAbertos = async (): Promise<EventosAbertos[]> => {
     throw new Error('Falha ao buscar produtos ' + error);
   }
 };  
-
-
-// export const fetchProductsForScreen = async (): Promise<RespostaParamsAppVendasPublico> => {
-//   return await fetchProducts();
-// }

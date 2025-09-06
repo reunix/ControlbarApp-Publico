@@ -1,3 +1,4 @@
+import { UpdateUser } from '@/types/UpdateUser';
 import { fetchApi } from './api-config';
 import { validateCpf } from './utils';
 
@@ -68,6 +69,21 @@ export const registerUser = async (
     });
 
     return { success: true, message: response.data.message || 'Cadastro realizado com sucesso' };
+  } catch (error) {
+    const errorMessage = (error as any).response?.data?.error || 'Falha ao realizar cadastro';
+    console.error('Erro na requisição de cadastro:', error);
+    return { success: false, message: errorMessage };
+  }
+};
+
+export const updateUser = async (  form: UpdateUser): Promise<{ success: boolean; message?: string }> => {
+  try {
+    const response = await fetchApi<any>('/autenticacao/update-user-app-publico/', {
+      method: 'PUT',
+      body: JSON.stringify(form), 
+    });
+
+    return { success: true, message: response.message || 'Cadastro realizado com sucesso' };
   } catch (error) {
     const errorMessage = (error as any).response?.data?.error || 'Falha ao realizar cadastro';
     console.error('Erro na requisição de cadastro:', error);

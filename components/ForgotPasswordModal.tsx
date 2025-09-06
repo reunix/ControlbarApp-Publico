@@ -1,7 +1,8 @@
 import { ThemedText } from "@/components/ThemedText";
 import { Colors } from "@/constants/Colors";
-import { sendEmailChangePassword } from "@/services/user-service";
+import { sendEmailChangePassword, updateUser } from "@/services/user-service";
 import { formatTime, validateEmail } from "@/services/utils";
+import { UpdateUser } from "@/types/UpdateUser";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
@@ -27,7 +28,8 @@ interface ForgotPasswordModalProps {
 }
 
 const STORAGE_KEY = "resetPasswordData";
-const timeLeftCodeEmail = 5 * 60; // 5 minutos
+// const timeLeftCodeEmail = 5 * 60; // 5 minutos
+const timeLeftCodeEmail = 60 * 60; // 1 hora
 
 const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
   visible,
@@ -150,12 +152,6 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
       JSON.stringify({ code, expiresAt })
     );
 
-    showToast({
-      type: "success",
-      text1: "Sucesso",
-      text2: "Código enviado para o e-mail.",
-    });
-
     setTimeLeft(timeLeftCodeEmail);
     setStep("code");
   };
@@ -190,9 +186,31 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
       return;
     }
 
-    showToast({ type: "success", text1: "Sucesso", text2: "Senha atualizada" });
-    await AsyncStorage.removeItem(STORAGE_KEY);
-    handleCancel();
+    try {
+      const dataUpdateUser: UpdateUser = {
+        usersweb_email: email,
+        usersweb_senha: newPassword,
+      };
+
+      const result = await updateUser(dataUpdateUser);
+
+      if (result.success) {
+        showToast({
+          type: "success",
+          text1: "Sucesso",
+          text2: result.message || "Cadastro atualizado com sucesso.",
+        });
+        await AsyncStorage.removeItem(STORAGE_KEY);
+        handleCancel();
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      showToast({
+        type: "error",
+        text1: "Erro",
+        text2: "Erro na tentativa de atualizar cadastro",
+      });
+    }
   };
 
   return (

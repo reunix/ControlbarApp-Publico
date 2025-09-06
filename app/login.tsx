@@ -16,7 +16,6 @@ import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -31,14 +30,14 @@ import { fetchProducts } from "../services/product-service";
 
 const LoginScreen = () => {
   const [cpf, setCpf] = useState("");
-  const [senha, setSenha] = useState("");
+  const [senha, setSenha] = useState("9966335");
   const [showPassword, setShowPassword] = useState(false);
   const [eventosAbertos, setEventosAbertos] = useState<EventosAbertos[]>([]);
   const router = useRouter();
   const [modalVisible, setModalVisible] = useState(false);
   const [forgotPasswordModalVisible, setForgotPasswordModalVisible] =
     useState(false);
-  const [email, setEmail] = useState("renato-muniz@hotmail.com");
+  const [email, setEmail] = useState("");
   const [saveLogin, setSaveLogin] = useState(false);
   const { setEventoSelecionado } = useEvento();
   const [loading, setLoading] = useState(false);
@@ -48,8 +47,8 @@ const LoginScreen = () => {
     longitude: number;
   } | null>(null);
   const { clearCart } = useCart();
-  const SEARCH_RADIUS = 100; // Raio de busca em metros (ajustável: 100 ou 1000)
-  const [locationAttempts, setLocationAttempts] = useState(0); // Contador de tentativas
+  const SEARCH_RADIUS = 100;
+  const [locationAttempts, setLocationAttempts] = useState(0);
 
   // Load saved CPF and get user location on mount
   useEffect(() => {
@@ -340,6 +339,7 @@ const LoginScreen = () => {
   const handleSelectEvento = async (evento: EventosAbertos) => {
     setEventoSelecionado(evento);
     setLoading(true);
+
     try {
       clearCart();
       const products = await fetchProducts(evento.idEvento);
@@ -361,9 +361,10 @@ const LoginScreen = () => {
   };
 
   const handleForgotPassword = async (email: string) => {
+    console.log("ok:handleForgotPassword");
     // A lógica de envio de e-mail foi movida para o ForgotPasswordModal
     // Aqui apenas mantemos a compatibilidade com o onSubmit
-    Alert.alert("ok");
+    // Alert.alert("ok");
     return;
   };
 

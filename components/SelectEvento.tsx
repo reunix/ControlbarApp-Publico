@@ -1,7 +1,7 @@
 import { ThemedText } from "@/components/ThemedText";
 import { EventosAbertos } from "@/types/RespostaEventosAbertos";
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   FlatList,
   Modal,
@@ -14,7 +14,6 @@ import { Colors } from "../constants/Colors";
 type SelectEventoProps = {
   visible: boolean;
   eventos: EventosAbertos[];
-
   onSelect: (evento: EventosAbertos) => void;
   onClose: () => void;
 };
@@ -25,13 +24,30 @@ export default function SelectEvento({
   onSelect,
   onClose,
 }: SelectEventoProps) {
+  const [isModalReady, setIsModalReady] = useState(false);
+
+  useEffect(() => {
+    // console.log("Modal visibilidade mudou para:", visible);
+    if (visible) {
+      setIsModalReady(false); // Reseta o estado ao abrirc
+
+      setTimeout(() => setIsModalReady(true), 100); // Dá tempo para a renderização
+    } else {
+      setIsModalReady(false);
+    }
+  }, [visible]);
+
   const handleSelect = (item: EventosAbertos) => {
     onSelect(item);
-    onClose(); // fecha aqui, fora do TouchableOpacity
+    // onClose();
   };
 
   const renderItem = ({ item }: { item: EventosAbertos }) => (
-    <TouchableOpacity style={styles.item} onPress={() => handleSelect(item)}>
+    <TouchableOpacity
+      style={styles.item}
+      onPress={() => handleSelect(item)}
+      activeOpacity={0.7}
+    >
       <View style={styles.itemContent}>
         <View style={styles.textContainer}>
           <ThemedText style={styles.text}>
@@ -54,17 +70,33 @@ export default function SelectEvento({
     </TouchableOpacity>
   );
 
+  if (!isModalReady) return null; // Evita renderização parcial
+
   return (
     <Modal
       visible={visible}
-      animationType="slide"
-      backdropColor={Colors.dark.backgroundSecondary}
-      transparent={false}
+      animationType="slide" // Desativado temporariamente para teste
+      transparent={true}
     >
       <View style={styles.overlay}>
-        <TouchableOpacity style={styles.closeBtn} onPress={() => onClose()}>
+        <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
           <Ionicons name="close-circle" size={32} color={Colors.dark.tint} />
         </TouchableOpacity>
+
+        {eventos.length > 1 && (
+          <ThemedText
+            style={{
+              color: Colors.dark.text,
+              fontSize: 14,
+              marginBottom: 15,
+              textAlign: "center",
+            }}
+          >
+            Ops! Há mais de um evento por perto. Escolha com atenção o evento
+            desejado! 😊
+          </ThemedText>
+        )}
+
         <ThemedText
           style={{
             color: Colors.dark.tint,
@@ -81,6 +113,8 @@ export default function SelectEvento({
             data={eventos}
             keyExtractor={(item) => item.idEvento.toString()}
             renderItem={renderItem}
+            initialNumToRender={10}
+            windowSize={5}
           />
         </View>
       </View>
@@ -91,7 +125,7 @@ export default function SelectEvento({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: Colors.dark.background,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -135,7 +169,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 20,
     right: 20,
-    padding: 10, // Aumenta a área de toque
-    zIndex: 10, // Garante que o botão fique acima do conteúdo
+    padding: 20,
+    zIndex: 10,
   },
 });
