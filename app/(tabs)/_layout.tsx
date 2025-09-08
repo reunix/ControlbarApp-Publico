@@ -1,12 +1,14 @@
-import { ThemedText } from "@/components/ThemedText";
-import { useEvento } from "@/constants/EventoContext";
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import { View } from "react-native";
-import { Colors } from "../../constants/Colors";
-import { useCart } from "../../context/CartContext";
 
-// Componente para exibir o total do carrinho no header
+import { ThemedText } from "@/components/ThemedText";
+import { Colors } from "@/constants/Colors";
+import { useEvento } from "@/constants/EventoContext";
+import { useCart } from "@/context/CartContext";
+import { loadUserLocally } from "@/services/storage";
+import { useEffect, useState } from "react";
+import { View } from "react-native";
+
 function HeaderRightTotal() {
   const { total } = useCart();
   return (
@@ -37,7 +39,7 @@ function HeaderTitle({ title }: { title: string }) {
       >
         {title}
       </ThemedText>
-      <ThemedText style={{ color: Colors.dark.text, fontSize: 12 }}>
+      <ThemedText style={{ color: Colors.dark.tint, fontSize: 12 }}>
         {eventoSelecionado?.nomeEvento}
       </ThemedText>
     </View>
@@ -45,6 +47,25 @@ function HeaderTitle({ title }: { title: string }) {
 }
 
 export default function TabsLayout() {
+  const { eventoSelecionado } = useEvento();
+  const [user, setUser] = useState<{
+    usersweb_id: number;
+    usersweb_nome: string;
+  } | null>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const loadedUser = await loadUserLocally();
+      if (loadedUser?.usersweb_id && loadedUser.usersweb_nome) {
+        setUser({
+          usersweb_id: loadedUser.usersweb_id,
+          usersweb_nome: loadedUser.usersweb_nome,
+        });
+      } else setUser(null);
+    };
+    fetchUser();
+  }, []);
+
   return (
     <Tabs
       screenOptions={{
@@ -110,6 +131,45 @@ export default function TabsLayout() {
           ),
           headerTitle: () => <HeaderTitle title="Pagamento" />,
         }}
+      />
+      <Tabs.Screen
+        name="chat"
+        options={{
+          title: "Chat",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons
+              name="chatbox-ellipses-outline"
+              size={size}
+              color={color}
+            />
+          ),
+          headerTitle: () => (
+            <HeaderTitle title="Chat" />
+          ),
+        }}
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            e.preventDefault();
+
+            if (
+              eventoSelecionado?.idEvento &&
+              user?.usersweb_id &&
+              user?.usersweb_nome
+            ) {
+              navigation.navigate("chat", {
+                screen: "eventchat",
+                params: {
+                  eventId: eventoSelecionado.idEvento,
+                  userId: user.usersweb_id,
+                  userName: user.usersweb_nome,
+                },
+              });
+            } else {
+              console.warn("Usuário ou evento não encontrado");
+              navigation.navigate("login");
+            }
+          },
+        })}
       />
       <Tabs.Screen
         name="logout"

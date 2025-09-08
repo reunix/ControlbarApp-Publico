@@ -1,8 +1,8 @@
 import { ThemedText } from "@/components/ThemedText";
 import { Colors } from "@/constants/Colors";
-import { sendEmailChangePassword, updateUser } from "@/services/user-service";
-import { formatTime, validateEmail } from "@/services/utils";
-import { UpdateUserPassword } from "@/types/UpdateUserPassword";
+import { createUser, sendEmailNewUser } from "@/services/user-service";
+import { formatTime, validateCpf, validateEmail } from "@/services/utils";
+import { UpdateUser } from "@/types/UpdateUser";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
@@ -31,7 +31,7 @@ const STORAGE_KEY = "resetPasswordData";
 const timeLeftCodeEmail = 5 * 60; // 5 minutos
 // const timeLeftCodeEmail = 60 * 60; // 1 hora
 
-const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
+const CreateNewUserModal: React.FC<ForgotPasswordModalProps> = ({
   visible,
   onClose,
   onSubmit,
@@ -40,6 +40,8 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
 }) => {
   const [step, setStep] = useState<"email" | "code">("email");
   const [code, setCode] = useState("");
+  const [cpf, setCpf] = useState("");
+  const [nome, setNome] = useState("");
   const [generatedCode, setGeneratedCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -131,10 +133,19 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
       return;
     }
 
+    if (!nome || nome.trim().split(" ").filter(Boolean).length < 2) {
+      showToast({
+        type: "error",
+        text1: "Erro",
+        text2: "Por favor, insira seu nome completo (nome e sobrenome)",
+      });
+      return;
+    }
+
     const code = generateCode();
     const expiresAt = Date.now() + timeLeftCodeEmail * 1000;
 
-    const result = await sendEmailChangePassword(email, code);
+    const result = await sendEmailNewUser(email, code, nome);
 
     if (!result.success) {
       showToast({
@@ -156,7 +167,7 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
     setStep("code");
   };
 
-  const handleConfirmPassword = async () => {
+  const handleConfirmNewUser = async () => {
     if (!code || !newPassword || !confirmPassword) {
       showToast({
         type: "error",
@@ -186,13 +197,24 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
       return;
     }
 
+    if (!validateCpf(cpf)) {
+      showToast({
+        type: "error",
+        text1: "Erro",
+        text2: "CPF inválido, por favor verifique.",
+      });
+      return;
+    }
+
     try {
-      const dataUpdateUser: UpdateUserPassword = {
+      const dataCreateUser: UpdateUser = {
         usersweb_email: email,
         usersweb_senha: newPassword,
+        usersweb_nome: nome,
+        usersweb_cpf: cpf,
       };
 
-      const result = await updateUser(dataUpdateUser);
+      const result = await createUser(dataCreateUser);
 
       if (result.success) {
         showToast({
@@ -238,8 +260,8 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                 }}
               >
                 {step === "code"
-                  ? `Recuperar Senha (${formatTime(timeLeft)})`
-                  : "Recuperar Senha"}
+                  ? `Criando Conta (${formatTime(timeLeft)})\n${email}`
+                  : `Criando Conta\n${email}`}
               </ThemedText>
 
               {step === "code" && (
@@ -261,7 +283,7 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                 {step === "email" ? (
                   <>
                     <ThemedText style={styles.title}>
-                      Informe seu e-mail cadastrado
+                      Informe seu e-mail para o cadastro
                     </ThemedText>
                     <View style={styles.inputContainer}>
                       <TextInput
@@ -272,6 +294,16 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                         onChangeText={setEmail}
                         keyboardType="email-address"
                         autoCapitalize="none"
+                      />
+                    </View>
+                    <View style={styles.inputContainer}>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Nome completo"
+                        placeholderTextColor={Colors.dark.text}
+                        value={nome}
+                        onChangeText={setNome}
+                        keyboardType="default"
                       />
                     </View>
                     <View style={styles.buttonContainer}>
@@ -305,6 +337,16 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                         keyboardType="numeric"
                         autoCapitalize="none"
                         maxLength={4}
+                      />
+                    </View>
+                    <View style={styles.inputContainer}>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Insira seu CPF"
+                        placeholderTextColor={Colors.dark.text}
+                        value={cpf}
+                        onChangeText={setCpf}
+                        keyboardType="numeric"
                       />
                     </View>
                     <View style={styles.inputContainer}>
@@ -362,7 +404,7 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={[styles.button, styles.submitButton]}
-                        onPress={handleConfirmPassword}
+                        onPress={handleConfirmNewUser}
                       >
                         <ThemedText style={styles.buttonText}>
                           Confirmar
@@ -458,4 +500,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ForgotPasswordModal;
+export default CreateNewUserModal;

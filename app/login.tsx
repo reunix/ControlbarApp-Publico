@@ -1,3 +1,4 @@
+import CreateNewUserModal from "@/components/CreateNewUserModal";
 import ForgotPasswordModal from "@/components/ForgotPasswordModal";
 import SelectEvento from "@/components/SelectEvento";
 import { ThemedText } from "@/components/ThemedText";
@@ -6,7 +7,7 @@ import { showToast } from "@/components/toast";
 import { useEvento } from "@/constants/EventoContext";
 import { useCart } from "@/context/CartContext";
 import { fetchEventosAbertos } from "@/services/eventos-service";
-import { saveProductsLocally } from "@/services/storage";
+import { saveProductsLocally, saveUserLocally } from "@/services/storage";
 import { login } from "@/services/user-service";
 import { EventosAbertos } from "@/types/RespostaEventosAbertos";
 import { Ionicons } from "@expo/vector-icons";
@@ -36,6 +37,8 @@ const LoginScreen = () => {
   const router = useRouter();
   const [modalVisible, setModalVisible] = useState(false);
   const [forgotPasswordModalVisible, setForgotPasswordModalVisible] =
+    useState(false);
+  const [createNewUserModalVisible, setCreateNewUserModalVisible] =
     useState(false);
   const [email, setEmail] = useState("");
   const [saveLogin, setSaveLogin] = useState(false);
@@ -259,9 +262,9 @@ const LoginScreen = () => {
     setLoading(true);
 
     try {
-      const result = await login(cpf, senha);
+      const dataUserResponse = await login(cpf, senha);
 
-      if (result.success) {
+      if (dataUserResponse) {
         if (saveLogin) {
           await AsyncStorage.setItem("savedCpf", cpf);
         } else {
@@ -311,6 +314,8 @@ const LoginScreen = () => {
 
         setEventosAbertos(filteredEvents);
 
+        await saveUserLocally(dataUserResponse);
+
         if (filteredEvents.length === 1 && userLocation) {
           await handleSelectEvento(filteredEvents[0]);
         } else {
@@ -320,17 +325,16 @@ const LoginScreen = () => {
         showToast({
           type: "error",
           text1: "Erro de Login",
-          text2: result.message || "CPF ou senha incorretos. Tente novamente.",
+          text2: "CPF ou senha incorretos. Tente novamente.",
         });
         setLoading(false);
       }
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error) {
+    } catch (error: any) {
       // console.error("Erro ao realizar login:", error);
       showToast({
         type: "error",
         text1: "Erro",
-        text2: "Falha ao realizar login",
+        text2: error || "Falha ao realizar login",
       });
       setLoading(false);
     }
@@ -470,7 +474,7 @@ const LoginScreen = () => {
 
             <View style={styles.postButtonContainer}>
               <TouchableOpacity
-                onPress={() => setForgotPasswordModalVisible(true)}
+                onPress={() => setCreateNewUserModalVisible(true)}
               >
                 <ThemedText style={styles.cadastrarme}>
                   Criar uma conta
@@ -509,6 +513,14 @@ const LoginScreen = () => {
       <ForgotPasswordModal
         visible={forgotPasswordModalVisible}
         onClose={() => setForgotPasswordModalVisible(false)}
+        onSubmit={handleForgotPassword}
+        email={email}
+        setEmail={setEmail}
+      />
+
+      <CreateNewUserModal
+        visible={createNewUserModalVisible}
+        onClose={() => setCreateNewUserModalVisible(false)}
         onSubmit={handleForgotPassword}
         email={email}
         setEmail={setEmail}

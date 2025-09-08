@@ -1,9 +1,13 @@
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
+import { showToast } from "@/components/toast";
 import { cepMask, cpfMask, estados } from "@/constants/consts";
+import { loadUserLocally } from "@/services/storage";
+import { getUserPorEmail, updateUser } from "@/services/user-service";
 import { Ionicons } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
-import React, { useState } from "react";
+import { useFocusEffect } from "expo-router";
+import React, { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -22,8 +26,6 @@ const PerfilScreen = () => {
   const [formData, setFormData] = useState({
     usersweb_nome: "",
     usersweb_email: "",
-    usersweb_senha: "",
-    usersweb_senha_confirmacao: "",
     usersweb_estado: "",
     usersweb_cpf: "",
     usersweb_cep: "",
@@ -36,19 +38,64 @@ const PerfilScreen = () => {
     usersweb_telefone: "",
   });
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  useFocusEffect(
+    useCallback(() => {
+      // Substitua pelo e-mail do usuário logado, ex.: vindo de AuthContext
+
+      const fetchUser = async () => {
+        setLoading(true);
+        try {
+          const localUser = await loadUserLocally();
+          const email = localUser?.usersweb_email;
+
+          if (!email) {
+            showToast({
+              type: "error",
+              text1: "Erro",
+              text2: "E-mail não fornecido",
+            });
+            setLoading(false);
+            return;
+          }
+
+          const result = await getUserPorEmail(email);
+
+          if (result) {
+            setFormData((prev) => ({
+              ...prev,
+              ...result,
+            }));
+          } else {
+            showToast({
+              type: "error",
+              text1: "Erro",
+              text2: "Usuário não encontrado.",
+            });
+          }
+        } catch (error: any) {
+          showToast({
+            type: "error",
+            text1: "Erro",
+            text2: error.message || "Erro na tentativa de buscar usuário",
+          });
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchUser();
+      // Não precisa de cleanup, pois não há efeitos contínuos
+    }, []) // Dependência no e-mail para re-busca se mudar
+  );
   const validateForm = () => {
     const requiredFields: (keyof typeof formData)[] = [
       "usersweb_nome",
       "usersweb_email",
-      "usersweb_senha",
-      "usersweb_senha_confirmacao",
       "usersweb_estado",
       "usersweb_cpf",
       "usersweb_cep",
@@ -72,10 +119,6 @@ const PerfilScreen = () => {
     }
     if (!/\S+@\S+\.\S+/.test(formData.usersweb_email)) {
       Alert.alert("Erro", "E-mail inválido");
-      return false;
-    }
-    if (formData.usersweb_senha !== formData.usersweb_senha_confirmacao) {
-      Alert.alert("Erro", "As senhas não coincidem");
       return false;
     }
     if (!/^\d{11}$/.test(formData.usersweb_cpf.replace(/[\.\-]/g, ""))) {
@@ -102,28 +145,27 @@ const PerfilScreen = () => {
     if (loading) return;
     setLoading(true);
 
-    // Lógica de cadastro comentada
-    // try {
-    //   const result = await register(formData);
-    //   if (result.success) {
-    //     const eventosAbertosData = await fetchEventosAbertos();
-    //     setEventosAbertos(eventosAbertosData);
-    //     if (eventosAbertosData.length === 0) {
-    //       Alert.alert("Atenção", "Nenhum evento disponível");
-    //       setLoading(false);
-    //       return;
-    //     }
-    //     setModalVisible(true);
-    //   } else {
-    //     Alert.alert("Falha no Cadastro", result.message || "Erro desconhecido");
-    //     setLoading(false);
-    //   }
-    // } catch (error) {
-    //   console.error("Erro ao realizar cadastro:", error);
-    //   Alert.alert("Erro", "Falha ao realizar cadastro");
-    //   setLoading(false);
-    // }
-    setLoading(false);
+    try {
+      const result = await updateUser(formData);
+
+      if (result.success) {
+        showToast({
+          type: "success",
+          text1: "Sucesso",
+          text2: result.message || "Cadastro atualizado com sucesso.",
+        });
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      showToast({
+        type: "error",
+        text1: "Erro",
+        text2: "Erro na tentativa de atualizar cadastro",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -150,72 +192,21 @@ const PerfilScreen = () => {
             >
               PERFIL
             </ThemedText>
+
+            <ThemedText
+              style={{
+                color: Colors.dark.text,
+                fontSize: 14,
+                marginBottom: 15,
+                paddingHorizontal: 70,
+                textAlign: "center",
+              }}
+            >
+              Para alterar sua senha, utilize a opção (Esqueci minha senha) na
+              tela de login. 👍
+            </ThemedText>
           </View>
           <View style={styles.formContainer}>
-            {/* Seção LOGIN */}
-            <View style={styles.sectionContainer}>
-              <ThemedText style={styles.sectionTitle}>LOGIN</ThemedText>
-              <View style={styles.inputContainer}>
-                <MaskInput
-                  style={styles.input}
-                  placeholder="CPF (11 dígitos)"
-                  placeholderTextColor={Colors.dark.text}
-                  value={formData.usersweb_cpf}
-                  onChangeText={(masked, unmasked) => {
-                    handleInputChange("usersweb_cpf", unmasked);
-                  }}
-                  mask={cpfMask}
-                  keyboardType="numeric"
-                />
-              </View>
-              <View style={styles.inputContainer}>
-                <TextInput
-                  style={[styles.input, styles.inputWithIcon]}
-                  placeholder="Senha"
-                  placeholderTextColor={Colors.dark.text}
-                  value={formData.usersweb_senha}
-                  onChangeText={(text) =>
-                    handleInputChange("usersweb_senha", text)
-                  }
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                />
-                <TouchableOpacity
-                  style={styles.eyeIcon}
-                  onPress={() => setShowPassword(!showPassword)}
-                >
-                  <Ionicons
-                    name={showPassword ? "eye-off" : "eye"}
-                    size={24}
-                    color={Colors.dark.text}
-                  />
-                </TouchableOpacity>
-              </View>
-              <View style={styles.inputContainer}>
-                <TextInput
-                  style={[styles.input, styles.inputWithIcon]}
-                  placeholder="Confirmação de senha"
-                  placeholderTextColor={Colors.dark.text}
-                  value={formData.usersweb_senha_confirmacao}
-                  onChangeText={(text) =>
-                    handleInputChange("usersweb_senha_confirmacao", text)
-                  }
-                  secureTextEntry={!showConfirmPassword}
-                  autoCapitalize="none"
-                />
-                <TouchableOpacity
-                  style={styles.eyeIcon}
-                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                >
-                  <Ionicons
-                    name={showConfirmPassword ? "eye-off" : "eye"}
-                    size={24}
-                    color={Colors.dark.text}
-                  />
-                </TouchableOpacity>
-              </View>
-            </View>
-
             {/* Seção DADOS PESSOAIS */}
             <View style={styles.sectionContainer}>
               <ThemedText style={styles.sectionTitle}>
@@ -244,6 +235,19 @@ const PerfilScreen = () => {
                   }
                   keyboardType="email-address"
                   autoCapitalize="none"
+                />
+              </View>
+              <View style={styles.inputContainer}>
+                <MaskInput
+                  style={styles.input}
+                  placeholder="CPF (11 dígitos)"
+                  placeholderTextColor={Colors.dark.text}
+                  value={formData.usersweb_cpf}
+                  onChangeText={(masked, unmasked) => {
+                    handleInputChange("usersweb_cpf", unmasked);
+                  }}
+                  mask={cpfMask}
+                  keyboardType="numeric"
                 />
               </View>
             </View>

@@ -13,9 +13,9 @@ import { Colors } from "@/constants/Colors";
 import { EventoProvider } from "@/constants/EventoContext";
 import { CartProvider } from "@/context/CartContext";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { View } from "react-native";
 import { Provider as PaperProvider } from "react-native-paper";
 import Toast from "react-native-toast-message";
-import { View } from "react-native";
 
 // Componente base para toasts
 const CustomToast = ({
@@ -97,6 +97,8 @@ export default function RootLayout() {
               <Stack.Screen name="index" options={{ headerShown: false }} />
               <Stack.Screen name="login" options={{ headerShown: false }} />
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              {/* <Stack.Screen name="chat" options={{ headerShown: false }} /> */}
+
               <Stack.Screen name="+not-found" />
             </Stack>
             <Toast

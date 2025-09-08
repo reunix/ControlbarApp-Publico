@@ -1,9 +1,11 @@
 import { ProdutoParamsAppVendasPublico } from '@/types/RespostaParamsAppVendasPublico';
+import { UpdateUser } from '@/types/UpdateUser';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CartItem } from '../types';
 
 const PRODUCTS_KEY = '@app:products';
 const CART_KEY = '@app:cart';
+const USER_KEY = '@app:user';
 
 export const saveProductsLocally = async (products: ProdutoParamsAppVendasPublico[]): Promise<void> => {
   try {
@@ -19,6 +21,24 @@ export const loadProductsLocally = async (): Promise<ProdutoParamsAppVendasPubli
     return stored ? JSON.parse(stored) : null;
   } catch (error) {
     console.error('Falha ao carregar produtos', error);
+    return null;
+  }
+};
+
+export const saveUserLocally = async (products: UpdateUser): Promise<void> => {
+  try {
+    await AsyncStorage.setItem(USER_KEY, JSON.stringify(products));
+  } catch (error) {
+    console.error('Falha ao salvar usuário', error);
+  }
+};
+
+export const loadUserLocally = async (): Promise<UpdateUser | null> => {
+  try {
+    const stored = await AsyncStorage.getItem(USER_KEY);
+    return stored ? JSON.parse(stored) : null;
+  } catch (error) {
+    console.error('Falha ao carregar usuário', error);
     return null;
   }
 };

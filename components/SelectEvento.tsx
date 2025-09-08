@@ -27,11 +27,10 @@ export default function SelectEvento({
   const [isModalReady, setIsModalReady] = useState(false);
 
   useEffect(() => {
-    // console.log("Modal visibilidade mudou para:", visible);
     if (visible) {
-      setIsModalReady(false); // Reseta o estado ao abrirc
+      setIsModalReady(false);
 
-      setTimeout(() => setIsModalReady(true), 100); // Dá tempo para a renderização
+      setTimeout(() => setIsModalReady(true), 100);
     } else {
       setIsModalReady(false);
     }
@@ -39,7 +38,6 @@ export default function SelectEvento({
 
   const handleSelect = (item: EventosAbertos) => {
     onSelect(item);
-    // onClose();
   };
 
   const renderItem = ({ item }: { item: EventosAbertos }) => (

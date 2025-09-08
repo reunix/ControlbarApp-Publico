@@ -71,6 +71,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   buttonContainer: {
+    backgroundColor: Colors.dark.background,
     flexDirection: "row",
     justifyContent: "space-around",
     width: "80%",
