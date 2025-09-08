@@ -20,7 +20,6 @@ export const login = async (cpf: string,senha:string): Promise<UpdateUser> => {
 
     return dataUserResponse
   } catch (error) {
-    
     console.log('error' ,error)
     throw error || 'Falha no login' ;
   }
