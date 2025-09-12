@@ -34,6 +34,8 @@ const LoginScreen = () => {
   const [senha, setSenha] = useState("9966335");
   const [showPassword, setShowPassword] = useState(false);
   const [eventosAbertos, setEventosAbertos] = useState<EventosAbertos[]>([]);
+  const [eventosPorLocalizacao, setEventosPorLocalizacao] =
+    useState<boolean>(true);
   const router = useRouter();
   const [modalVisible, setModalVisible] = useState(false);
   const [forgotPasswordModalVisible, setForgotPasswordModalVisible] =
@@ -287,33 +289,15 @@ const LoginScreen = () => {
 
         let eventosAbertosData = await fetchEventosAbertos();
         let filteredEvents = filterNearbyEvents(eventosAbertosData);
+        setEventosPorLocalizacao(true);
 
+        // caso nao existe eventos na localização, exibo todos!!
         if (filteredEvents.length === 0) {
-          showToast({
-            type: "error",
-            text1: "Atenção",
-            text2: `Nenhum evento encontrado dentro de ${SEARCH_RADIUS} metros, tentando novamente...`,
-          });
-          const locationSuccess = await retryGetUserLocation();
-          if (!locationSuccess) {
-            setLoading(false);
-            return;
-          }
-          eventosAbertosData = await fetchEventosAbertos();
-          filteredEvents = filterNearbyEvents(eventosAbertosData);
-          if (filteredEvents.length === 0) {
-            showToast({
-              type: "error",
-              text1: "Atenção",
-              text2: `Nenhum evento encontrado dentro de ${SEARCH_RADIUS} metros.`,
-            });
-            setLoading(false);
-            return;
-          }
+          setEventosPorLocalizacao(false);
+          filteredEvents = eventosAbertosData;
         }
 
         setEventosAbertos(filteredEvents);
-
         await saveUserLocally(dataUserResponse);
 
         if (filteredEvents.length === 1 && userLocation) {
@@ -502,6 +486,7 @@ const LoginScreen = () => {
 
       <SelectEvento
         visible={modalVisible}
+        eventosPorLocalizacao={eventosPorLocalizacao}
         eventos={eventosAbertos}
         onSelect={handleSelectEvento}
         onClose={() => {

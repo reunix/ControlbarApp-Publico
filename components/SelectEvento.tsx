@@ -13,6 +13,7 @@ import { Colors } from "../constants/Colors";
 
 type SelectEventoProps = {
   visible: boolean;
+  eventosPorLocalizacao: boolean;
   eventos: EventosAbertos[];
   onSelect: (evento: EventosAbertos) => void;
   onClose: () => void;
@@ -20,6 +21,7 @@ type SelectEventoProps = {
 
 export default function SelectEvento({
   visible,
+  eventosPorLocalizacao,
   eventos,
   onSelect,
   onClose,
@@ -57,6 +59,7 @@ export default function SelectEvento({
           <ThemedText style={styles.textEndereco}>
             {item.enderecoCompleto || "Endereço não informado"}
           </ThemedText>
+          <ThemedText style={styles.textData}>{item.dataEvento}</ThemedText>
         </View>
         <Ionicons
           name="chevron-forward"
@@ -68,45 +71,38 @@ export default function SelectEvento({
     </TouchableOpacity>
   );
 
-  if (!isModalReady) return null; // Evita renderização parcial
+  if (!isModalReady) return null; 
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide" // Desativado temporariamente para teste
-      transparent={true}
-    >
+    <Modal visible={visible} animationType="slide" transparent={true}>
       <View style={styles.overlay}>
-        <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
-          <Ionicons name="close-circle" size={32} color={Colors.dark.tint} />
-        </TouchableOpacity>
+        <View style={styles.topo}>
+
+          <View style={styles.tituloContainer}>
+            <View style={{ flex: 1, alignItems: "center" }}>
+              <ThemedText style={styles.titulo}>SELECIONE O EVENTO</ThemedText>
+            </View>
+
+            <TouchableOpacity style={{ marginRight: 17 }} onPress={onClose}>
+              <Ionicons
+                name="close-circle"
+                size={32}
+                color={Colors.dark.tint}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
 
         {eventos.length > 1 && (
-          <ThemedText
-            style={{
-              color: Colors.dark.text,
-              fontSize: 14,
-              marginBottom: 15,
-              textAlign: "center",
-            }}
-          >
-            Ops! Há mais de um evento por perto. Escolha com atenção o evento
-            desejado! 😊
+          <ThemedText style={styles.mensagem}>
+            {eventosPorLocalizacao
+              ? "ℹ️ Há mais de um evento por perto.\nEscolha com atenção! 😊"
+              : // : "⚠️ Não há eventos próximos de você no momento.\nConfira todos os eventos disponíveis e escolha com atenção."}
+                "ℹ️ Nenhum evento próximo.\nConfira todos os eventos disponíveis abaixo.\n⚠️ Escolha com atenção."}
           </ThemedText>
         )}
 
-        <ThemedText
-          style={{
-            color: Colors.dark.tint,
-            fontWeight: "bold",
-            fontSize: 20,
-            marginBottom: 15,
-          }}
-        >
-          SELECIONE O EVENTO
-        </ThemedText>
-
-        <View style={styles.container}>
+        <View style={styles.listaContainer}>
           <FlatList
             data={eventos}
             keyExtractor={(item) => item.idEvento.toString()}
@@ -140,7 +136,7 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.dark.border,
   },
   text: {
-    color: Colors.dark.text,
+    color: Colors.dark.tint,
     fontWeight: "bold",
     fontSize: 14,
   },
@@ -150,6 +146,10 @@ const styles = StyleSheet.create({
   },
   textEndereco: {
     color: Colors.dark.text,
+    fontSize: 10,
+  },
+  textData: {
+    color: Colors.dark.tint,
     fontSize: 10,
   },
   icon: {
@@ -169,5 +169,34 @@ const styles = StyleSheet.create({
     right: 20,
     padding: 20,
     zIndex: 10,
+  },
+  topo: {
+    width: "100%",
+    marginBottom: 10,
+  },
+  mensagem: {
+    color: Colors.dark.text,
+    fontSize: 14,
+    marginBottom: 15,
+    paddingHorizontal: 10,
+    textAlign: "center",
+  },
+  tituloContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 5,
+  },
+  titulo: {
+    color: Colors.dark.text,
+    fontWeight: "bold",
+    fontSize: 20,
+  },
+  listaContainer: {
+    flex: 1,
+    width: "99%",
+    maxHeight: "90%",
+    backgroundColor: Colors.dark.backgroundSecondary,
+    borderRadius: 10,
+    padding: 10,
   },
 });

@@ -128,7 +128,7 @@ const CartScreen = () => {
               total <= 0 && styles.buttonTextDisabled,
             ]}
           >
-            Pagamento
+            PAGAR
           </ThemedText>
         </TouchableOpacity>
       </View>

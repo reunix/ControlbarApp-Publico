@@ -4,12 +4,11 @@ import { showToast } from "@/components/toast";
 import { useEvento } from "@/constants/EventoContext";
 import { Ionicons } from "@expo/vector-icons";
 import { Buffer } from "buffer";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Modal,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -17,13 +16,7 @@ import QRCode from "react-native-qrcode-svg";
 import CardPaymentModal from "../../components/CardPaymentModal";
 import { Colors } from "../../constants/Colors";
 import { useCart } from "../../context/CartContext";
-
-type CardPaymentDetails = {
-  cardNumber: string;
-  cardName: string;
-  cardExpiration: string;
-  cardCvv: string;
-};
+import { useFocusEffect } from "expo-router";
 
 const PaymentScreen = () => {
   const { cart, total } = useCart();
@@ -33,12 +26,21 @@ const PaymentScreen = () => {
   const [isCardModalVisible, setIsCardModalVisible] = useState(false);
   const { eventoSelecionado } = useEvento();
 
+  const [paymentOption, setPaymentOption] = useState<"app" | "evento">("app");
+
   const formPagtoMap: Record<string, number> = {
     Crédito: 1,
     Débito: 2,
     Pix: 5,
   };
 
+
+  useFocusEffect(
+    useCallback(() => {
+      setPaymentOption("app"); // resetar para "app" ao entrar na tela
+    }, [])
+  );
+  
   const handlePayment = (method: string) => {
     if (total <= 0) {
       showToast({
@@ -46,11 +48,10 @@ const PaymentScreen = () => {
         text1: "Atenção",
         text2: "Nenhum produto no carrinho.",
       });
-
       return;
     }
 
-    if (eventoSelecionado?.autopagto) {
+    if (paymentOption === "app") {
       setIsCardModalVisible(true);
     } else {
       setShowQR(true);
@@ -65,10 +66,8 @@ const PaymentScreen = () => {
             fp: formPagtoMap[method],
             tt: total.toFixed(2),
           };
-
           const jsonStr = JSON.stringify(dadosQR);
           const base64Str = Buffer.from(jsonStr).toString("base64");
-
           setQrData(base64Str);
         } catch (e: any) {
           console.error("Erro ao gerar QRCode:", e);
@@ -78,7 +77,7 @@ const PaymentScreen = () => {
     }
   };
 
-  const handleCardPayment = (data: CardPaymentDetails) => {
+  const handleCardPayment = (data: any) => {
     showToast({
       type: "success",
       text1: "Atenção",
@@ -89,22 +88,54 @@ const PaymentScreen = () => {
   let qrElement = null;
   if (qrError) {
     qrElement = (
-      <Text style={{ color: "red" }}>Erro ao gerar QRCode: {qrError}</Text>
+      <ThemedText style={{ color: "red" }}>Erro: {qrError}</ThemedText>
     );
   } else if (qrData) {
     try {
       qrElement = <QRCode value={qrData} size={250} ecl="M" />;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e: any) {
       qrElement = (
-        <Text style={{ color: "red" }}>
-          Erro ao renderizar QRCode: {String(e)}
-        </Text>
+        <ThemedText style={{ color: "red" }}>
+          Erro ao renderizar QRCode
+        </ThemedText>
       );
     }
   }
 
   return (
     <ThemedView style={styles.container}>
+      {/* Radio Buttons */}
+      <View style={styles.radioContainer}>
+        <TouchableOpacity
+          style={styles.radioOption}
+          onPress={() => setPaymentOption("app")}
+        >
+          <View style={styles.radioCircle}>
+            {paymentOption === "app" && <View style={styles.radioChecked} />}
+          </View>
+          <ThemedText style={styles.radioLabel}>Pagar no App</ThemedText>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.radioOption}
+          onPress={() => setPaymentOption("evento")}
+        >
+          <View style={styles.radioCircle}>
+            {paymentOption === "evento" && <View style={styles.radioChecked} />}
+          </View>
+          <ThemedText style={styles.radioLabel}>Pagar no Evento</ThemedText>
+        </TouchableOpacity>
+      </View>
+
+      {/* Texto explicativo */}
+      <ThemedText style={styles.paymentDescription}>
+        {paymentOption === "app"
+          ? "ℹ️  O pagamento será realizado diretamente neste aplicativo. Escolha uma das formas de pagamento abaixo e finalize a compra. Após a confirmação, você receberá os comprovantes (QRCodes) para retirada dos produtos no evento."
+          : "ℹ️ Escolha uma forma de pagamento e gere o QRCode neste aplicativo. Em seguida, dirija-se a um ponto de venda no evento, apresente o QRCode para processar a compra e receber os comprovantes para retirada dos produtos."}
+      </ThemedText>
+
+      {/* Botões de pagamento */}
       <TouchableOpacity
         style={styles.button}
         onPress={() => handlePayment("Crédito")}
@@ -144,6 +175,7 @@ const PaymentScreen = () => {
         <ThemedText style={styles.buttonText}>PIX</ThemedText>
       </TouchableOpacity>
 
+      {/* QR Modal */}
       <Modal visible={showQR} animationType="slide" transparent>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
@@ -193,10 +225,63 @@ const PaymentScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent: "flex-start",
     alignItems: "center",
     padding: 20,
     backgroundColor: Colors.dark.background,
+  },
+  radioContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    width: "100%",
+    marginBottom: 25,
+    marginTop: 5,
+  },
+  radioOption: { flexDirection: "row", alignItems: "center" },
+  radioCircle: {
+    height: 20,
+    width: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: Colors.dark.tint,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 8,
+  },
+  radioChecked: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: Colors.dark.tint,
+  },
+  radioLabel: { color: Colors.dark.text, fontSize: 14 },
+  paymentDescription: {
+    fontSize: 14,
+    color: Colors.dark.text,
+    marginBottom: 30,
+    textAlign: "center",
+  },
+  button: {
+    height: 100,
+    width: "99%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.dark.backgroundSecondary,
+    padding: 15,
+    borderRadius: 8,
+    marginVertical: 10,
+    position: "relative",
+  },
+  buttonText: {
+    color: Colors.dark.text,
+    fontWeight: "bold",
+    fontSize: 20,
+  },
+  iconLeft: {
+    position: "absolute",
+    left: 15,
+    color: Colors.dark.tint,
   },
   modalContainer: {
     flex: 1,
@@ -217,28 +302,6 @@ const styles = StyleSheet.create({
     right: 20,
     padding: 10,
     zIndex: 10,
-  },
-  button: {
-    height: 100,
-    width: "90%",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: Colors.dark.backgroundSecondary,
-    padding: 15,
-    borderRadius: 8,
-    marginVertical: 10,
-    position: "relative",
-  },
-  buttonText: {
-    color: Colors.dark.text,
-    fontWeight: "bold",
-    fontSize: 20,
-  },
-  iconLeft: {
-    position: "absolute",
-    left: 15,
-    color: Colors.dark.tint,
   },
 });
 
